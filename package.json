@@ -1,0 +1,184 @@
+{
+  "name": "inline-code-coach",
+  "displayName": "Code Coach · 코드 코치",
+  "description": "주석과 프로젝트 코드로 예시를 제안하고 Tab으로 수락하는 Codex 인라인 자동완성",
+  "version": "0.3.2",
+  "publisher": "local-learning-tools",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jmyeong/coding_coach.git"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Education",
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "extensionKind": ["workspace"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "tsc --noEmit",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.100.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.8.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeCoach.toggle",
+        "title": "코드 코치: 켜기 / 끄기",
+        "icon": "$(mortar-board)"
+      },
+      {
+        "command": "codeCoach.ask",
+        "title": "코드 코치: 주석에서 코드 예시 제안",
+        "icon": "$(code)"
+      },
+      {
+        "command": "codeCoach.reasoning",
+        "title": "코드 코치: 추론 수준 선택",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "codeCoach.model",
+        "title": "코드 코치: 모델 선택",
+        "icon": "$(hubot)"
+      },
+      {
+        "command": "codeCoach.context",
+        "title": "코드 코치: 마지막 전송 컨텍스트 확인"
+      },
+      {
+        "command": "codeCoach.error",
+        "title": "코드 코치: 최근 오류 확인",
+        "icon": "$(warning)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeCoach.ask",
+          "group": "codeCoach",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "codeCoach.model",
+          "group": "codeCoach",
+          "when": "editorTextFocus"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "codeCoach.ask",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "editor.action.inlineSuggest.commit",
+        "key": "tab",
+        "when": "config.codeCoach.enabled && inlineSuggestionVisible && editorTextFocus && !editorTabMovesFocus && !suggestWidgetVisible && !inSnippetMode"
+      }
+    ],
+    "configuration": {
+      "title": "Code Coach · 코드 코치",
+      "properties": {
+        "codeCoach.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "주석 기반 코드 예시 인라인 제안을 켭니다."
+        },
+        "codeCoach.reasoningEffort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "low",
+          "description": "모델의 추론 수준. 모델마다 지원 수준이 다릅니다."
+        },
+        "codeCoach.model": {
+          "type": "string",
+          "default": "",
+          "description": "Codex 모델 ID. 비워두면 CLI 기본 모델을 사용합니다."
+        },
+        "codeCoach.codexPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Codex 실행 파일 경로. 비워두면 PATH 또는 설치된 Codex 확장에서 찾습니다."
+        },
+        "codeCoach.debounceMs": {
+          "type": "number",
+          "default": 600,
+          "minimum": 500,
+          "maximum": 10000,
+          "description": "주석 다음 줄에서 코드 제안을 요청하기까지 기다리는 시간(ms)."
+        },
+        "codeCoach.maxContextChars": {
+          "type": "number",
+          "default": 6000,
+          "minimum": 1000,
+          "maximum": 80000,
+          "description": "현재 코드와 관련 파일의 최대 전송 문자 수."
+        },
+        "codeCoach.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 180,
+          "minimum": 15,
+          "maximum": 600,
+          "description": "응답 제한 시간(초)."
+        },
+        "codeCoach.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/data/**",
+            "**/datasets/**",
+            "**/checkpoints/**",
+            "**/wandb/**"
+          ],
+          "description": "컨텍스트에서 추가로 제외할 파일 glob."
+        },
+        "codeCoach.commentTrigger": {
+          "type": "string",
+          "enum": [
+            "all",
+            "marked"
+          ],
+          "default": "all",
+          "description": "all: 일반 주석을 참고합니다. marked: @coach 주석만 참고합니다."
+        },
+        "codeCoach.maxSuggestionLines": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "maximum": 40,
+          "description": "코드 제안의 목표 줄 수. 블록을 마무리하기 위해 더 길어질 수 있으며 생성된 코드를 강제로 자르지 않습니다."
+        }
+      }
+    }
+  }
+}

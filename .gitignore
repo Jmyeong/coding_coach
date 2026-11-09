@@ -1,0 +1,8 @@
+node_modules/
+*.vsix
+!inline-code-coach-0.3.2.vsix
+.DS_Store
+.env
+.env.*
+.codex/
+*.log
